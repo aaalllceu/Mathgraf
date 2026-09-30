@@ -8,9 +8,12 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
 from kivy.uix.widget import Widget
 from kivy.utils import get_color_from_hex
+
+from function_math import evaluate, quadratic_characteristics
 
 
 NAVY = get_color_from_hex("#172554")
@@ -78,7 +81,7 @@ class GraphWidget(Widget):
             a, b, c = self.coefficients
 
             def fn(x):
-                return a * x + b if self.mode == "linear" else a * x * x + b * x + c
+                return evaluate(self.mode, (a, b, c), x)
 
             sample_count = 301
             ys = [fn(x0 + (x1 - x0) * i / (sample_count - 1)) for i in range(sample_count)]
@@ -148,9 +151,7 @@ class FunctionGraphApp(App):
             Color(*PAPER)
             self.background = Rectangle(pos=self.root_layout.pos, size=self.root_layout.size)
 
-        scroll = __import__("kivy.uix.scrollview", fromlist=["ScrollView"]).ScrollView(
-            do_scroll_x=False, bar_width=dp(3), scroll_type=["bars", "content"]
-        )
+        scroll = ScrollView(do_scroll_x=False, bar_width=dp(3), scroll_type=["bars", "content"])
         content = BoxLayout(orientation="vertical", size_hint_y=None, spacing=dp(12), padding=[0, 0, 0, dp(12)])
         content.bind(minimum_height=content.setter("height"))
         scroll.add_widget(content)
@@ -314,10 +315,7 @@ class FunctionGraphApp(App):
                 detail = f"Inclinação: {a:g}   ·   Intercepto em y: {b:g}"
             else:
                 equation = f"f(x) = {a:g}x² {'+' if b >= 0 else '−'} {abs(b):g}x {'+' if c >= 0 else '−'} {abs(c):g}"
-                delta = b * b - 4 * a * c
-                xv = -b / (2 * a)
-                yv = a * xv * xv + b * xv + c
-                roots = "duas raízes reais" if delta > 0 else "uma raiz real" if delta == 0 else "sem raízes reais"
+                delta, xv, yv, roots = quadratic_characteristics(a, b, c)
                 detail = f"Vértice: ({xv:.3g}, {yv:.3g})   ·   Δ = {delta:.3g} ({roots})"
             self.result.text = equation + "\n" + detail
             self.status.text = "Gráfico atualizado."
